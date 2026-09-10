@@ -43,32 +43,66 @@ app.post('/api/detect', (req, res) => {
 });
 
 function filterSelectedFields(data, selectedFields) {
-  if (!selectedFields || selectedFields.length === 0) return data;
+  if (!data) return {};
+
   const filtered = {
-    url: data.url,
-    sourceType: data.sourceType
+    url: data.url || '',
+    sourceType: data.sourceType || 'Web'
   };
 
   const fieldMap = {
-    title: ['title', 'productName'],
+    title: ['name', 'title', 'productName'],
     price: ['price', 'priceFormatted', 'originalPrice', 'originalPriceFormatted', 'discount'],
     emails: ['email', 'emails'],
     phones: ['phone', 'phones'],
-    company: ['company'],
-    country: ['country', 'address'],
-    socials: ['socials', 'website'],
-    description: ['description', 'specifications', 'variants', 'highlights', 'category'],
+    company: ['company', 'businessType'],
+    country: ['country', 'address', 'city'],
+    socials: ['website', 'socials'],
+    description: ['description', 'specifications', 'variants', 'highlights', 'category', 'rating', 'reviews'],
     images: ['mainImage', 'images']
   };
 
-  for (const sel of selectedFields) {
-    const keys = fieldMap[sel] || [sel];
-    for (const k of keys) {
-      if (data[k] !== undefined) {
-        filtered[k] = data[k];
+  const defaultValues = {
+    name: 'N/A',
+    title: 'N/A',
+    businessType: 'N/A',
+    category: 'N/A',
+    phone: 'N/A',
+    email: 'N/A',
+    website: 'N/A',
+    company: 'N/A',
+    address: 'N/A',
+    city: 'N/A',
+    country: 'Pakistan',
+    rating: 'N/A',
+    reviews: 'N/A'
+  };
+
+  Object.keys(data).forEach(k => {
+    if (data[k] !== undefined && data[k] !== null) {
+      filtered[k] = data[k];
+    }
+  });
+
+  if (selectedFields && selectedFields.length > 0) {
+    for (const sel of selectedFields) {
+      const keys = fieldMap[sel] || [sel];
+      for (const k of keys) {
+        if (data[k] !== undefined && data[k] !== null && data[k] !== '') {
+          filtered[k] = data[k];
+        } else if (filtered[k] === undefined && defaultValues[k] !== undefined) {
+          filtered[k] = defaultValues[k];
+        }
       }
     }
   }
+
+  ['name', 'title', 'businessType', 'phone', 'email', 'website', 'address', 'city', 'country'].forEach(k => {
+    if (filtered[k] === undefined || filtered[k] === null || filtered[k] === '') {
+      filtered[k] = defaultValues[k] || 'N/A';
+    }
+  });
+
   return filtered;
 }
 
@@ -129,11 +163,20 @@ app.post('/api/scrape', async (req, res) => {
           extractedRaw = await scrapeGenericWeb(page, rawUrl, logFn);
         }
 
-        const filtered = filterSelectedFields(extractedRaw, selectedFields);
-        results.push(filtered);
-
-        sendEvent('item', { item: filtered, index: currentIdx });
-        sendEvent('log', { message: `✅ [${currentIdx}/${urls.length}] Finished: ${extractedRaw.title || rawUrl}` });
+        if (Array.isArray(extractedRaw)) {
+          for (let j = 0; j < extractedRaw.length; j++) {
+            const item = extractedRaw[j];
+            const filtered = filterSelectedFields(item, selectedFields);
+            results.push(filtered);
+            sendEvent('item', { item: filtered, index: results.length });
+          }
+          sendEvent('log', { message: `✅ Finished scraping ${extractedRaw.length} profile(s) from ${rawUrl}` });
+        } else if (extractedRaw) {
+          const filtered = filterSelectedFields(extractedRaw, selectedFields);
+          results.push(filtered);
+          sendEvent('item', { item: filtered, index: results.length });
+          sendEvent('log', { message: `✅ Finished: ${extractedRaw.title || extractedRaw.name || rawUrl}` });
+        }
       } catch (err) {
         sendEvent('log', { message: `❌ [${currentIdx}/${urls.length}] Error on ${rawUrl}: ${err.message}` });
         results.push({ url: rawUrl, error: err.message });

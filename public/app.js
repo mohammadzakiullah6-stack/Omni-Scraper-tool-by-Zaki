@@ -154,45 +154,81 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderTable(results) {
     if (!results || results.length === 0) {
       tableHead.innerHTML = '';
-      tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No data extracted.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No data extracted.</td></tr>';
       return;
     }
 
-    const headersSet = new Set(['Source', 'Title / Name']);
-    results.forEach((r) => {
-      Object.keys(r).forEach((k) => {
-        if (!['url', 'sourceType', 'title', 'productName', 'images', 'rawImages'].includes(k)) {
-          headersSet.add(k.charAt(0).toUpperCase() + k.slice(1));
-        }
-      });
-    });
-    headersSet.add('Images');
-    headersSet.add('Actions');
+    const preferredOrder = [
+      { key: 'name', alt: ['title', 'productName'], label: 'Name / Business' },
+      { key: 'businessType', alt: ['category'], label: 'Business Type / Category' },
+      { key: 'phone', label: 'Phone' },
+      { key: 'email', label: 'Email' },
+      { key: 'address', label: 'Address' },
+      { key: 'city', label: 'City' },
+      { key: 'country', label: 'Country' },
+      { key: 'website', label: 'Website' },
+      { key: 'rating', label: 'Rating' },
+      { key: 'reviews', label: 'Reviews' }
+    ];
 
-    const headers = Array.from(headersSet);
+    const keysInUse = new Set();
+    results.forEach((r) => Object.keys(r).forEach((k) => keysInUse.add(k)));
+
+    const activeCols = [];
+    preferredOrder.forEach((col) => {
+      if (keysInUse.has(col.key) || (col.alt && col.alt.some((a) => keysInUse.has(a)))) {
+        activeCols.push(col);
+      }
+    });
+
+    keysInUse.forEach((k) => {
+      if (!['sourceType', 'url', 'images', 'rawImages', 'mainImage'].includes(k) && !activeCols.some((c) => c.key === k || (c.alt && c.alt.includes(k)))) {
+        activeCols.push({ key: k, label: k.charAt(0).toUpperCase() + k.slice(1) });
+      }
+    });
+
+    const headers = ['Source', ...activeCols.map((c) => c.label), 'Images', 'Action'];
     tableHead.innerHTML = `<tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr>`;
 
     tableBody.innerHTML = results
       .map((item) => {
+        const sourceName = item.sourceType || 'Web';
+        const sourceClass = sourceName === 'Daraz' ? 'daraz' : sourceName === 'Google Maps' ? 'maps' : 'web';
+
+        const colsHtml = activeCols
+          .map((col) => {
+            let val = item[col.key];
+            if ((val === undefined || val === null || val === '') && col.alt) {
+              for (const a of col.alt) {
+                if (item[a]) { val = item[a]; break; }
+              }
+            }
+            if (val === undefined || val === null || val === '' || val === 'null') {
+              return '<td><span style="color:#6B7280;font-style:italic;">N/A</span></td>';
+            }
+            if (Array.isArray(val)) {
+              return `<td>${val.slice(0, 3).join('<br>')}${val.length > 3 ? `<br><small style="color:#6366F1;">+${val.length - 3} more</small>` : ''}</td>`;
+            }
+            if (typeof val === 'object') {
+              return `<td><pre style="font-size:11px;max-height:80px;overflow:hidden;">${JSON.stringify(val, null, 1)}</pre></td>`;
+            }
+            if (col.key === 'website' && String(val).startsWith('http')) {
+              return `<td><a href="${val}" target="_blank" style="color:#3897f0;text-decoration:underline;">${val.replace(/^https?:\/\//, '').slice(0, 25)}...</a></td>`;
+            }
+            if (col.key === 'email' && val !== 'N/A') {
+              return `<td><span style="color:#10B981;font-weight:600;">${val}</span></td>`;
+            }
+            if (col.key === 'phone' && val !== 'N/A') {
+              return `<td><span style="color:#F59E0B;font-weight:600;">${val}</span></td>`;
+            }
+            return `<td>${val}</td>`;
+          })
+          .join('');
+
         return `
         <tr>
-          <td><span class="badge badge-${item.sourceType === 'Daraz' ? 'daraz' : item.sourceType === 'Google Maps' ? 'maps' : 'web'}">${item.sourceType || 'Web'}</span></td>
-          <td><strong>${item.title || item.productName || 'N/A'}</strong><br><small style="color:#6B7280;">${item.url || ''}</small></td>
-          ${headers
-            .filter((h) => !['Source', 'Title / Name', 'Images', 'Actions'].includes(h))
-            .map((h) => {
-              const key = h.charAt(0).toLowerCase() + h.slice(1);
-              let val = item[key];
-              if (val === undefined || val === null) return '<td><span style="color:#6B7280;">null</span></td>';
-              if (Array.isArray(val)) {
-                return `<td>${val.slice(0, 3).join('<br>')}${val.length > 3 ? `<br><small style="color:#6366F1;">+${val.length - 3} more</small>` : ''}</td>`;
-              }
-              if (typeof val === 'object') {
-                return `<td><pre style="font-size:11px;max-height:80px;overflow:hidden;">${JSON.stringify(val, null, 1)}</pre></td>`;
-              }
-              return `<td>${val}</td>`;
-            })
-            .join('')}
+          <td><span class="badge badge-${sourceClass}">${sourceName}</span></td>
+          ${colsHtml}
           <td>${(item.images && item.images.length) || 0} imgs</td>
           <td><a href="${item.url}" target="_blank" style="color:#6366F1;text-decoration:none;font-weight:600;">Visit ↗</a></td>
         </tr>
@@ -209,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const imgs = item.images || [];
       imgs.forEach((imgUrl) => {
         if (!allImgs.some((i) => i.url === imgUrl)) {
-          allImgs.push({ url: imgUrl, title: item.title || item.productName || 'Image' });
+          allImgs.push({ url: imgUrl, title: item.title || item.productName || item.name || 'Image' });
         }
       });
     });
@@ -342,38 +378,83 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 1. Instant Client-Side CSV Export (100% Reliable, Zero Network Dependency)
+  // 1. Instant Client-Side CSV Export (100% Reliable & Properly Formatted Leads)
   exportCsvBtn.addEventListener('click', () => {
     if (!scrapedResults || scrapedResults.length === 0) {
       alert('No data available to export.');
       return;
     }
 
-    const allKeys = new Set(['sourceType', 'url', 'title']);
-    scrapedResults.forEach((item) => {
-      Object.keys(item).forEach((k) => allKeys.add(k));
+    const preferredOrder = [
+      { key: 'sourceType', label: 'Source' },
+      { key: 'name', alt: ['title', 'productName'], label: 'Name / Business' },
+      { key: 'businessType', alt: ['category'], label: 'Business Type / Category' },
+      { key: 'phone', label: 'Phone Number' },
+      { key: 'email', label: 'Email Address' },
+      { key: 'address', label: 'Address' },
+      { key: 'city', label: 'City' },
+      { key: 'country', label: 'Country' },
+      { key: 'website', label: 'Website URL' },
+      { key: 'rating', label: 'Google Rating' },
+      { key: 'reviews', label: 'Total Reviews' },
+      { key: 'price', label: 'Price' },
+      { key: 'discount', label: 'Discount' },
+      { key: 'url', label: 'Target URL' }
+    ];
+
+    const keysInUse = new Set();
+    scrapedResults.forEach((r) => Object.keys(r).forEach((k) => keysInUse.add(k)));
+
+    const activeCols = [];
+    preferredOrder.forEach((col) => {
+      if (keysInUse.has(col.key) || (col.alt && col.alt.some((a) => keysInUse.has(a)))) {
+        activeCols.push(col);
+      }
     });
 
-    const headers = Array.from(allKeys);
-    const rows = [headers.map((h) => `"${h}"`).join(',')];
+    keysInUse.forEach((k) => {
+      if (!['sourceType', 'images', 'rawImages', 'mainImage'].includes(k) && !activeCols.some((c) => c.key === k || (c.alt && c.alt.includes(k)))) {
+        activeCols.push({ key: k, label: k.charAt(0).toUpperCase() + k.slice(1) });
+      }
+    });
+
+    const exportHeaders = activeCols.map((c) => c.label);
+    exportHeaders.push('Images Count');
+    exportHeaders.push('Image URLs');
+
+    const rows = [exportHeaders.map((h) => `"${h}"`).join(',')];
 
     scrapedResults.forEach((item) => {
-      const row = headers.map((h) => {
-        let val = item[h];
-        if (val === undefined || val === null) return '""';
-        if (Array.isArray(val)) val = val.join('; ');
-        else if (typeof val === 'object') val = JSON.stringify(val);
+      const rowVals = activeCols.map((col) => {
+        let val = item[col.key];
+        if ((val === undefined || val === null || val === '') && col.alt) {
+          for (const a of col.alt) {
+            if (item[a]) { val = item[a]; break; }
+          }
+        }
+        if (val === undefined || val === null || val === '' || val === 'null') {
+          val = 'N/A';
+        } else if (Array.isArray(val)) {
+          val = val.join('; ');
+        } else if (typeof val === 'object') {
+          val = JSON.stringify(val);
+        }
         val = String(val).replace(/"/g, '""');
         return `"${val}"`;
       });
-      rows.push(row.join(','));
+
+      const imgs = item.images || [];
+      rowVals.push(`"${imgs.length}"`);
+      rowVals.push(`"${imgs.join(' ; ')}"`);
+
+      rows.push(rowVals.join(','));
     });
 
     const csvContent = '\uFEFF' + rows.join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `scraped_data_${Date.now()}.csv`;
+    link.download = `scraped_leads_${Date.now()}.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();
