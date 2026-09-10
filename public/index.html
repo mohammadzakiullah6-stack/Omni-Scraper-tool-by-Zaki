@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniScrape by Zaki | Universal Multi-Source Web & Lead Scraper</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-background"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="logo-title">OmniScrape <span class="badge-pro">PRO</span> <span class="by-zaki-badge">by Zaki</span></h1>
+          <p class="logo-subtitle">Universal Multi-Source Web, Daraz & Google Maps Lead Extractor by Zaki</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-daraz">Daraz.pk</span>
+        <span class="badge badge-maps">Google Maps</span>
+        <span class="badge badge-web">Any Website</span>
+      </div>
+    </header>
+
+    <!-- Main Scraper Card -->
+    <main class="card main-card">
+      <!-- Input Section -->
+      <div class="input-section">
+        <div class="input-header">
+          <label for="urlInput" class="section-label">Target URL(s) to Scrape</label>
+          <div class="input-mode-toggle">
+            <button type="button" class="toggle-btn active" id="singleModeBtn">Single URL</button>
+            <button type="button" class="toggle-btn" id="batchModeBtn">Batch (Multiple URLs)</button>
+          </div>
+        </div>
+
+        <div class="url-bar" id="singleUrlContainer">
+          <div class="url-input-wrap">
+            <svg class="url-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <input type="url" id="urlInput" placeholder="Paste website, Daraz store/product, or Google Maps URL here..." autocomplete="off">
+            <div class="detected-badge" id="detectedBadge">
+              <span class="dot"></span>
+              <span id="detectedText">Auto-Detect</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="url-bar-batch" id="batchUrlContainer" style="display: none;">
+          <textarea id="batchUrlInput" rows="4" placeholder="Enter one URL per line:&#10;https://www.daraz.pk/products/...&#10;https://www.google.com/maps/place/...&#10;https://example.com"></textarea>
+        </div>
+      </div>
+
+      <!-- Field Selection Section -->
+      <div class="fields-section">
+        <div class="fields-header">
+          <div>
+            <h3 class="section-label">Data Fields Selection</h3>
+            <p class="section-help">Choose the exact information you wish to extract from the target page:</p>
+          </div>
+          <div class="fields-quick-actions">
+            <button type="button" class="btn-text" id="selectAllBtn">Select All</button>
+            <span class="divider">|</span>
+            <button type="button" class="btn-text" id="unselectAllBtn">Clear All</button>
+          </div>
+        </div>
+
+        <div class="fields-grid" id="fieldsGrid">
+          <!-- Field Card 1: Title / Product Name -->
+          <label class="field-card active" data-field="title">
+            <input type="checkbox" name="field" value="title" checked>
+            <div class="field-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+            </div>
+            <div class="field-info">
+              <span class="field-name">Title / Product Name</span>
+              <span class="field-desc">Page title, product name or business name</span>
+            </div>
+          </label>
+
+          <!-- Field Card 2: Price & Discounts -->
+          <label class="field-card active" data-field="price">
+            <input type="checkbox" name="field" value="price" checked>
+            <div class="field-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            <div class="field-info">
+              <span class="field-name">Price & Discount</span>
+              <span class="field-desc">Current price, original price & % discount</span>
+            </div>
+          </label>
+
+          <!-- Field Card 3: Phone Numbers -->
+          <label class="field-card active" data-field="phones">
+            <input type="checkbox" name="field" value="phones" checked>
+            <div class="field-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            </div>
+            <div class="field-info">
+              <span class="field-name">Phone Numbers</span>
+              <span class="field-desc">Contact & WhatsApp phone numbers</span>
+            </div>
+          </label>
+
+          <!-- Field Card 4: Emails -->
+          <label class="field-card active" data-field="emails">
+            <input type="checkbox" name="field" value="emails" checked>
+            <div class="field-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </div>
+            <div class="field-info">
+              <span class="field-name">Emails</span>
+              <span class="field-desc">Contact & business email addresses</span>
+            </div>
+          </label>
+
+          <!-- Field Card 5: Images -->
+          <label class="field-card active" data-field="images">
+            <input type="checkbox" name="field" value="images" checked>
+            <div class="field-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </div>
+            <div class="field-info">
+              <span class="field-name">Images</span>
+              <span class="field-desc">HD master gallery & product visuals</span>
+            </div>
+          </label>
+
+          <!-- Field Card 6: Company / Brand -->
+          <label class="field-card active" data-field="company">
+            <input type="checkbox" name="field" value="company" checked>
+            <div class="field-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 7v14M21 7v14M6 11h2M6 15h2M10 11h2M10 15h2M14 11h2M14 15h2M18 11h2M18 15h2M9 3h6v4H9z"/></svg>
+            </div>
+            <div class="field-info">
+              <span class="field-name">Company / Brand</span>
+              <span class="field-desc">Seller, business name or brand</span>
+            </div>
+          </label>
+
+          <!-- Field Card 7: Country & Address -->
+          <label class="field-card active" data-field="country">
+            <input type="checkbox" name="field" value="country" checked>
+            <div class="field-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            </div>
+            <div class="field-info">
+              <span class="field-name">Country & Address</span>
+              <span class="field-desc">Physical address & country identifier</span>
+            </div>
+          </label>
+
+          <!-- Field Card 8: Social Links -->
+          <label class="field-card active" data-field="socials">
+            <input type="checkbox" name="field" value="socials" checked>
+            <div class="field-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            </div>
+            <div class="field-info">
+              <span class="field-name">Social Links & Web</span>
+              <span class="field-desc">WhatsApp, FB, Insta, LinkedIn, Website</span>
+            </div>
+          </label>
+
+          <!-- Field Card 9: Description & Specs -->
+          <label class="field-card active" data-field="description">
+            <input type="checkbox" name="field" value="description" checked>
+            <div class="field-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </div>
+            <div class="field-info">
+              <span class="field-name">Description & Specs</span>
+              <span class="field-desc">Specifications, highlights & details</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <button type="button" class="btn btn-primary" id="startScrapeBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Start Scraping
+        </button>
+        <button type="button" class="btn btn-secondary" id="clearBtn">
+          Clear
+        </button>
+      </div>
+    </main>
+
+    <!-- Live Console Output -->
+    <section class="card console-card" id="consoleSection" style="display: none;">
+      <div class="console-header">
+        <div class="console-title">
+          <span class="pulse-dot"></span>
+          <span>Live Playwright Scraper Console</span>
+        </div>
+        <div class="progress-info">
+          <span id="progressText">0 / 0</span>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+      </div>
+      <div class="console-log" id="consoleLog"></div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="card results-card" id="resultsSection" style="display: none;">
+      <div class="results-header">
+        <div class="results-tabs">
+          <button type="button" class="tab-btn active" data-tab="table">Extracted Table (<span id="resultsCount">0</span>)</button>
+          <button type="button" class="tab-btn" data-tab="images">Image Gallery</button>
+          <button type="button" class="tab-btn" data-tab="json">Raw JSON</button>
+        </div>
+        <div class="results-actions">
+          <button type="button" class="btn btn-folder" id="saveLocalBtn" title="Save images directly to a folder on your PC and open it in Windows Explorer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            Save to PC Folder
+          </button>
+          <button type="button" class="btn btn-zip" id="exportZipBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            Download ZIP
+          </button>
+          <button type="button" class="btn btn-export" id="exportCsvBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Export CSV
+          </button>
+          <button type="button" class="btn btn-export" id="exportJsonBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Export JSON
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 1: Table -->
+      <div class="tab-content active" id="tableTab">
+        <div class="table-responsive">
+          <table class="data-table" id="dataTable">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Gallery -->
+      <div class="tab-content" id="imagesTab">
+        <div class="gallery-grid" id="galleryGrid"></div>
+      </div>
+
+      <!-- Tab 3: JSON -->
+      <div class="tab-content" id="jsonTab">
+        <pre class="json-code" id="jsonCode"></pre>
+      </div>
+    </section>
+
+      <!-- Destination Folder Selection Modal -->
+    <div class="folder-modal-overlay" id="folderModalOverlay" style="display: none;">
+      <div class="folder-modal-card">
+        <div class="folder-modal-header">
+          <div class="folder-modal-icon">📁</div>
+          <div>
+            <h3>Choose Destination Folder on Your PC</h3>
+            <p>Images ko apne computer ke kis folder mein save karna chahte hain?</p>
+          </div>
+        </div>
+
+        <div class="folder-input-box">
+          <label for="customFolderInput">Exact Folder Path on Your PC:</label>
+          <div class="folder-input-row">
+            <input type="text" id="customFolderInput" value="D:\Scraped_Images" placeholder="e.g. D:\Scraped_Images or C:\Users\Darulsolutions\Downloads\Images" />
+          </div>
+        </div>
+
+        <div class="quick-folder-chips">
+          <span class="chips-label">Quick Suggestions:</span>
+          <button type="button" class="folder-chip active" data-path="D:\Scraped_Images">D:\Scraped_Images</button>
+          <button type="button" class="folder-chip" data-path="C:\Users\Darulsolutions\Downloads\Scraped_Images">Downloads</button>
+          <button type="button" class="folder-chip" data-path="C:\Users\Darulsolutions\Desktop\Scraped_Images">Desktop</button>
+        </div>
+
+        <div class="folder-modal-status" id="folderModalStatus" style="display: none;"></div>
+
+        <div class="folder-modal-actions">
+          <button type="button" class="btn btn-primary" id="confirmSaveLocalBtn">
+            Save All Images Here &amp; Open in Explorer
+          </button>
+          <button type="button" class="btn btn-secondary" id="cancelFolderModalBtn">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="scraper-footer">
+      <div class="footer-content">
+        <p>OmniScrape PRO • Developed with ❤️ by <strong>Zaki</strong></p>
+        <span class="footer-sep">•</span>
+        <p>Universal Lead, E-Commerce & Media Extractor (Daraz, Google Maps, Generic Web)</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
